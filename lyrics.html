@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morgenshtern Player</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Oswald', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Размытый фон (обложка) */
+        .bg-blur {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.genius.com/a5b4c6e3d2e1f0b1a3b4c5d6e7f8a9b0.1000x1000x1.jpg'); /* Ссылка на обложку */
+            background-size: cover;
+            background-position: center;
+            filter: blur(30px) brightness(0.4);
+            z-index: -1;
+        }
+
+        /* Контейнер плеера */
+        .player-card {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 1;
+        }
+
+        /* Обложка альбома */
+        .album-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            object-fit: cover;
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.03); box-shadow: 0 10px 40px rgba(220, 20, 60, 0.4); }
+        }
+
+        /* Текст песни */
+        .lyrics-container {
+            height: 120px; /* Фиксированная высота, чтобы верстка не прыгала */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .lyric-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #dc143c; /* Красный акцент */
+            text-shadow: 0 0 15px rgba(220, 20, 60, 0.6);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .lyric-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Сам аудио плеер */
+        audio {
+            width: 100%;
+            outline: none;
+            filter: invert(0.9); /* Делаем плеер темным/стильным */
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Фон -->
+    <div class="bg-blur"></div>
+
+    <div class="player-card">
+        <!-- Картинка (можно заменить ссылку на свою) -->
+        <img src="https://upload.wikimedia.org/wikipedia/ru/8/88/Morgenshtern_-_%D0%9F%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D0%BD%D1%8F%D1%8F_%D0%9B%D1%8E%D0%B1%D0%BE%D0%B2%D1%8C.jpg" alt="Cover" class="album-art">
+        
+        <!-- Сюда выводятся слова -->
+        <div class="lyrics-container">
+            <div id="lyrics" class="lyric-text">Нажми Play...</div>
+        </div>
+
+        <!-- Аудио файл -->
+        <audio id="audio-player" controls>
+            <source src="music.mp3" type="audio/mpeg">
+            Ваш браузер не поддерживает аудио.
+        </audio>
+    </div>
+
+    <script>
+        const audio = document.getElementById('audio-player');
+        const lyricsDisplay = document.getElementById('lyrics');
+
+        // Таймкоды из твоего видео
+        const events = [
+            { time: 0, text: "..." },
+            { time: 7.5, text: "Ты снова куришь, снова слёзы на твоих щеках" },
+            { time: 11.5, text: "Опять ждала меня бухого до семи утра" },
+            { time: 15.5, text: "Пообещал, что я всю жизнь буду любить тебя" },
+            { time: 19.5, text: "Я рэпер, зай, мои слова не стоят ни*уя" },
+            { time: 23.5, text: "И я подонок, я изменщик,\nя gaslighter и абьюзер" },
+            { time: 27.5, text: "Я не нравлюсь твоей маме,\nда и х*й с ней" },
+            { time: 31.0, text: "Детка, хватит мне уже давать последний шанс" },
+            { time: 35.5, text: "Счастье — это не для нас" },
+            
+            { time: 38.5, text: "Последняя любовь, пепел на простынях" },
+            { time: 42.5, text: "Бери все мои вещи, выкидывай из окна" },
+            { time: 47.0, text: "Последняя любовь, плачешь, а мне плевать" },
+            { time: 51.5, text: "Ты больше не поверишь никому и никогда" },
+            
+            { time: 63.0, text: "А ты вернула все подарки, отписалась в инсте" },
+            { time: 67.5, text: "В общем, сделала всю ту х*йню, что делают все" },
+            { time: 71.5, text: "И я оставлю тебе травмы, когда брошу тебя" },
+            { time: 75.5, text: "Ведь ты же так искала парня, что похож на отца" },
+            
+            { time: 79.5, text: "И когда будешь ныть подругам, то что я уе*ан" },
+            { time: 83.5, text: "Попроси, чтоб они все мне перестали писать" },
+            { time: 87.5, text: "Я с детства знал, что все девчонки любят плохих парней" },
+            { time: 91.5, text: "Но детка, я не плохой парень, я плохой человек" },
+            
+            { time: 95.5, text: "И я нормальным быть пытался, но я зае*ался" },
+            { time: 100.0, text: "Я рожден уе*ком не достойным любви" },
+            { time: 104.0, text: "Извини..." },
+            
+            { time: 106.0, text: "Последняя любовь, пепел на простынях" },
+            { time: 110.0, text: "Бери все мои вещи, выкидывай из окна" },
+            { time: 114.5, text: "Последняя любовь, плачешь, а мне плевать" },
+            { time: 118.5, text: "Ты больше не поверишь никому и никогда" },
+            
+            { time: 122.5, text: "Последняя любовь..." },
+            { time: 130.0, text: "" }
+        ];
+
+        // Функция обновления текста
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            let currentText = "";
+
+            // Ищем актуальную строку
+            for (let i = 0; i < events.length; i++) {
+                if (currentTime >= events[i].time) {
+                    currentText = events[i].text;
+                } else {
+                    break;
+                }
+            }
+
+            // Если текст изменился, обновляем с анимацией
+            if (lyricsDisplay.innerText !== currentText) {
+                lyricsDisplay.classList.remove('visible'); // Скрываем (fade out)
+                
+                setTimeout(() => {
+                    lyricsDisplay.innerText = currentText;
+                    lyricsDisplay.classList.add('visible'); // Показываем (fade in)
+                }, 100); // Небольшая задержка для плавности
+            }
+        });
+
+        // Показать первый текст при загрузке
+        lyricsDisplay.classList.add('visible');
+    </script>
+</body>
+</html>
