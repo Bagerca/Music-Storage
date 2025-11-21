@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morgenshtern - Последняя Любовь</title>
+    <title>Morgenshtern Player</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
 
         body {
             margin: 0;
             padding: 0;
-            background-color: #050505;
+            background-color: #080808;
             color: #fff;
             font-family: 'Montserrat', sans-serif;
             display: flex;
@@ -31,12 +31,12 @@
             background-image: url('https://images.genius.com/dbd965f591c6bfd58d4997c749e57ce0.1000x1000x1.png');
             background-size: cover;
             background-position: center;
-            filter: blur(40px) brightness(0.3);
+            filter: blur(50px) brightness(0.25); /* Сильнее размыл и затемнил, чтобы не резало глаза */
             z-index: -1;
-            transform: scale(1.1); /* Чтобы убрать белые края от блюра */
+            transform: scale(1.1);
         }
 
-        /* Плеер */
+        /* Карточка плеера */
         .player-card {
             width: 90%;
             max-width: 500px;
@@ -48,58 +48,66 @@
 
         /* Обложка */
         .album-art {
-            width: 250px;
-            height: 250px;
-            border-radius: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            width: 260px;
+            height: 260px;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
             margin-bottom: 40px;
             object-fit: cover;
         }
 
         /* Контейнер текста */
         .lyrics-wrapper {
-            height: 100px; /* Фиксируем высоту, чтобы верстка не скакала */
+            height: 110px; /* Фиксированная высота */
             width: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             margin-bottom: 20px;
             text-align: center;
+            position: relative;
         }
 
         .lyric-text {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 800;
-            line-height: 1.3;
+            line-height: 1.4;
             text-transform: uppercase;
             color: #ffffff;
-            /* Мягкая тень вместо жесткого свечения */
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8); 
-            opacity: 0.4; /* По дефолту полупрозрачный */
-            transform: scale(0.95);
-            transition: opacity 0.2s ease-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            padding: 0 10px;
+            opacity: 0;
+            transform: translateY(15px) scale(0.95);
+            transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
+            position: absolute; /* Чтобы текст появлялся поверх предыдущего плавно */
+            width: 100%;
+            pointer-events: none;
         }
 
-        /* Класс активной строки */
+        /* Активная строка */
         .lyric-text.active {
             opacity: 1;
-            transform: scale(1);
-            color: #ff2e43; /* Акцентный цвет */
+            transform: translateY(0) scale(1);
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5); /* Мягкая тень */
         }
 
-        /* Стилизация аудио-элемента */
+        /* Скрытая строка (уходящая вверх) */
+        .lyric-text.exit {
+            opacity: 0;
+            transform: translateY(-15px) scale(1.05);
+        }
+
+        /* Аудио плеер */
         audio {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 10px;
             border-radius: 30px;
-            opacity: 0.8;
+            opacity: 0.9;
+            outline: none;
         }
         
-        /* Адаптив для телефонов */
         @media (max-width: 600px) {
-            .album-art { width: 200px; height: 200px; margin-bottom: 20px; }
-            .lyric-text { font-size: 1.3rem; }
+            .album-art { width: 220px; height: 220px; margin-bottom: 30px; }
+            .lyric-text { font-size: 1.2rem; padding: 0 10px; }
         }
     </style>
 </head>
@@ -111,7 +119,9 @@
         <img src="https://images.genius.com/dbd965f591c6bfd58d4997c749e57ce0.1000x1000x1.png" alt="Cover" class="album-art">
         
         <div class="lyrics-wrapper">
-            <div id="lyrics" class="lyric-text">...</div>
+            <!-- Здесь будет меняться текст через JS -->
+            <div id="lyric-line-1" class="lyric-text active">...</div>
+            <div id="lyric-line-2" class="lyric-text"></div>
         </div>
 
         <audio id="audio-player" controls>
@@ -121,54 +131,59 @@
 
     <script>
         const audio = document.getElementById('audio-player');
-        const lyricsDisplay = document.getElementById('lyrics');
+        const line1 = document.getElementById('lyric-line-1');
+        const line2 = document.getElementById('lyric-line-2');
+        
+        // Используем два элемента для плавного кроссфейда (один исчезает, другой появляется)
+        let activeElement = line1;
+        let nextElement = line2;
 
-        // Таймкоды: Подправлены под ритм (чуть раньше, чтобы успеть прочитать)
+        // Таймкоды (Сверил с видео еще раз)
         const events = [
             { time: 0, text: "..." },
-            { time: 7.0, text: "Ты снова куришь, снова слёзы на твоих щеках" },
-            { time: 11.0, text: "Опять ждала меня бухого до семи утра" },
-            { time: 15.0, text: "Пообещал, что я всю жизнь буду любить тебя" },
-            { time: 19.0, text: "Я рэпер, зай, мои слова не стоят ни*уя" },
+            { time: 7.3, text: "Ты снова куришь, снова слёзы на твоих щеках" },
+            { time: 11.2, text: "Опять ждала меня бухого до семи утра" },
+            { time: 15.2, text: "Пообещал, что я всю жизнь буду любить тебя" },
+            { time: 19.2, text: "Я рэпер, зай, мои слова не стоят ни*уя" },
             
-            { time: 23.0, text: "И я подонок, я изменщик..." },
-            { time: 25.0, text: "...я gaslighter и абьюзер" }, // Разбил длинную строку для динамики
-            { time: 27.0, text: "Я не нравлюсь твоей маме..." },
-            { time: 29.0, text: "...да и х*й с ней" },
+            { time: 23.2, text: "И я подонок, я изменщик..." },
+            { time: 25.2, text: "...я gaslighter и абьюзер" },
+            { time: 27.2, text: "Я не нравлюсь твоей маме..." },
+            { time: 29.2, text: "...да и х*й с ней" },
             
-            { time: 31.0, text: "Детка, хватит мне уже давать последний шанс" },
-            { time: 35.2, text: "Счастье — это не для нас" },
+            { time: 31.2, text: "Детка, хватит мне уже давать последний шанс" },
+            { time: 35.4, text: "Счастье — это не для нас" },
             
-            // Припев - четко в бит
-            { time: 38.8, text: "Последняя любовь, пепел на простынях" },
-            { time: 42.8, text: "Бери все мои вещи, выкидывай из окна" },
-            { time: 47.0, text: "Последняя любовь, плачешь, а мне плевать" },
-            { time: 51.2, text: "Ты больше не поверишь никому и никогда" },
+            // Припев (Ударные)
+            { time: 38.6, text: "Последняя любовь, пепел на простынях" },
+            { time: 42.6, text: "Бери все мои вещи, выкидывай из окна" },
+            { time: 46.8, text: "Последняя любовь, плачешь, а мне плевать" },
+            { time: 51.0, text: "Ты больше не поверишь никому и никогда" },
             
-            { time: 56.0, text: "..." }, // Пауза
+            { time: 56.0, text: "..." }, // Инструментал
 
             // Куплет 2
-            { time: 103.5, text: "А ты вернула все подарки, отписалась в инсте" },
-            { time: 107.5, text: "В общем, сделала всю ту х*йню, что делают все" },
-            { time: 111.5, text: "И я оставлю тебе травмы, когда брошу тебя" },
-            { time: 115.5, text: "Ведь ты же так искала парня, что похож на отца" },
+            { time: 103.2, text: "А ты вернула все подарки, отписалась в инсте" },
+            { time: 107.2, text: "В общем, сделала всю ту х*йню, что делают все" },
+            { time: 111.2, text: "И я оставлю тебе травмы, когда брошу тебя" },
+            { time: 115.2, text: "Ведь ты же так искала парня, что похож на отца" },
             
-            { time: 119.5, text: "И когда будешь ныть подругам, то что я уе*ан" },
-            { time: 123.5, text: "Попроси, чтоб они все мне перестали писать" },
-            { time: 127.5, text: "Я с детства знал, что все девчонки любят плохих парней" },
-            { time: 131.5, text: "Но детка, я не плохой парень, я плохой человек" },
+            { time: 119.2, text: "И когда будешь ныть подругам, то что я уе*ан" },
+            { time: 123.2, text: "Попроси, чтоб они все мне перестали писать" },
+            { time: 127.2, text: "Я с детства знал, что все девчонки любят плохих парней" },
+            { time: 131.2, text: "Но детка, я не плохой парень, я плохой человек" },
             
-            { time: 135.5, text: "И я нормальным быть пытался, но я зае*ался" },
-            { time: 140.0, text: "Я рожден уе*ком не достойным любви" },
-            { time: 144.2, text: "Извини..." },
+            { time: 135.2, text: "И я нормальным быть пытался, но я зае*ался" },
+            { time: 139.5, text: "Я рожден уе*ком не достойным любви" },
+            { time: 144.0, text: "Извини..." },
             
             // Финальный припев
-            { time: 146.5, text: "Последняя любовь, пепел на простынях" },
-            { time: 150.5, text: "Бери все мои вещи, выкидывай из окна" },
-            { time: 154.8, text: "Последняя любовь, плачешь, а мне плевать" },
-            { time: 158.8, text: "Ты больше не поверишь никому и никогда" },
+            { time: 146.2, text: "Последняя любовь, пепел на простынях" },
+            { time: 150.2, text: "Бери все мои вещи, выкидывай из окна" },
+            { time: 154.5, text: "Последняя любовь, плачешь, а мне плевать" },
+            { time: 158.5, text: "Ты больше не поверишь никому и никогда" },
             
-            { time: 163.0, text: "Последняя любовь..." },
+            { time: 162.5, text: "Последняя любовь..." },
             { time: 170.0, text: "" }
         ];
 
@@ -187,25 +202,29 @@
                 }
             }
 
-            // Обновляем только если индекс изменился
             if (currentIndex !== -1 && currentIndex !== lastIndex) {
                 const text = events[currentIndex].text;
-                
-                // Убираем класс активности (визуально "приглушаем")
-                lyricsDisplay.classList.remove('active');
-                
-                // Мгновенная смена текста (без fade-out в 0, чтобы не было мерцания)
-                // Но с небольшой задержкой класса active для анимации "удара"
-                lyricsDisplay.innerText = text;
-                
-                // Форсируем перерисовку, чтобы анимация сработала снова
-                void lyricsDisplay.offsetWidth; 
-                
-                lyricsDisplay.classList.add('active');
-                
+                updateLyrics(text);
                 lastIndex = currentIndex;
             }
         });
+
+        function updateLyrics(text) {
+            // 1. Записываем новый текст в скрытый элемент
+            nextElement.innerText = text;
+            
+            // 2. Меняем классы для анимации
+            activeElement.classList.remove('active');
+            activeElement.classList.add('exit'); // Старый текст улетает вверх
+            
+            nextElement.classList.remove('exit');
+            nextElement.classList.add('active'); // Новый текст появляется снизу
+
+            // 3. Меняем местами ссылки на элементы
+            const temp = activeElement;
+            activeElement = nextElement;
+            nextElement = temp;
+        }
     </script>
 </body>
 </html>
