@@ -31,7 +31,7 @@
             background-image: url('https://images.genius.com/dbd965f591c6bfd58d4997c749e57ce0.1000x1000x1.png');
             background-size: cover;
             background-position: center;
-            filter: blur(50px) brightness(0.25); /* Сильнее размыл и затемнил, чтобы не резало глаза */
+            filter: blur(50px) brightness(0.25);
             z-index: -1;
             transform: scale(1.1);
         }
@@ -58,7 +58,7 @@
 
         /* Контейнер текста */
         .lyrics-wrapper {
-            height: 110px; /* Фиксированная высота */
+            height: 110px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -78,16 +78,18 @@
             opacity: 0;
             transform: translateY(15px) scale(0.95);
             transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
-            position: absolute; /* Чтобы текст появлялся поверх предыдущего плавно */
+            position: absolute;
             width: 100%;
             pointer-events: none;
+            padding: 0 10px;
+            box-sizing: border-box;
         }
 
         /* Активная строка */
         .lyric-text.active {
             opacity: 1;
             transform: translateY(0) scale(1);
-            text-shadow: 0 4px 12px rgba(0,0,0,0.5); /* Мягкая тень */
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
         /* Скрытая строка (уходящая вверх) */
@@ -107,7 +109,7 @@
         
         @media (max-width: 600px) {
             .album-art { width: 220px; height: 220px; margin-bottom: 30px; }
-            .lyric-text { font-size: 1.2rem; padding: 0 10px; }
+            .lyric-text { font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -119,7 +121,6 @@
         <img src="https://images.genius.com/dbd965f591c6bfd58d4997c749e57ce0.1000x1000x1.png" alt="Cover" class="album-art">
         
         <div class="lyrics-wrapper">
-            <!-- Здесь будет меняться текст через JS -->
             <div id="lyric-line-1" class="lyric-text active">...</div>
             <div id="lyric-line-2" class="lyric-text"></div>
         </div>
@@ -134,11 +135,10 @@
         const line1 = document.getElementById('lyric-line-1');
         const line2 = document.getElementById('lyric-line-2');
         
-        // Используем два элемента для плавного кроссфейда (один исчезает, другой появляется)
         let activeElement = line1;
         let nextElement = line2;
 
-        // Таймкоды (Сверил с видео еще раз)
+        // ИСПРАВЛЕННЫЕ ТАЙМКОДЫ (В СЕКУНДАХ)
         const events = [
             { time: 0, text: "..." },
             { time: 7.3, text: "Ты снова куришь, снова слёзы на твоих щеках" },
@@ -154,37 +154,38 @@
             { time: 31.2, text: "Детка, хватит мне уже давать последний шанс" },
             { time: 35.4, text: "Счастье — это не для нас" },
             
-            // Припев (Ударные)
+            // Припев 1
             { time: 38.6, text: "Последняя любовь, пепел на простынях" },
             { time: 42.6, text: "Бери все мои вещи, выкидывай из окна" },
             { time: 46.8, text: "Последняя любовь, плачешь, а мне плевать" },
             { time: 51.0, text: "Ты больше не поверишь никому и никогда" },
             
-            { time: 56.0, text: "..." }, // Инструментал
+            { time: 56.0, text: "..." }, 
 
-            // Куплет 2
-            { time: 103.2, text: "А ты вернула все подарки, отписалась в инсте" },
-            { time: 107.2, text: "В общем, сделала всю ту х*йню, что делают все" },
-            { time: 111.2, text: "И я оставлю тебе травмы, когда брошу тебя" },
-            { time: 115.2, text: "Ведь ты же так искала парня, что похож на отца" },
+            // Куплет 2 (ЗДЕСЬ БЫЛА ОШИБКА: 1:03 = 63 сек, а не 103)
+            { time: 63.0, text: "А ты вернула все подарки, отписалась в инсте" },
+            { time: 67.0, text: "В общем, сделала всю ту х*йню, что делают все" },
+            { time: 71.0, text: "И я оставлю тебе травмы, когда брошу тебя" },
+            { time: 75.0, text: "Ведь ты же так искала парня, что похож на отца" },
             
-            { time: 119.2, text: "И когда будешь ныть подругам, то что я уе*ан" },
-            { time: 123.2, text: "Попроси, чтоб они все мне перестали писать" },
-            { time: 127.2, text: "Я с детства знал, что все девчонки любят плохих парней" },
-            { time: 131.2, text: "Но детка, я не плохой парень, я плохой человек" },
+            { time: 79.0, text: "И когда будешь ныть подругам, то что я уе*ан" },
+            { time: 83.0, text: "Попроси, чтоб они все мне перестали писать" },
+            { time: 87.0, text: "Я с детства знал, что все девчонки любят плохих парней" },
+            { time: 91.0, text: "Но детка, я не плохой парень, я плохой человек" },
             
-            { time: 135.2, text: "И я нормальным быть пытался, но я зае*ался" },
-            { time: 139.5, text: "Я рожден уе*ком не достойным любви" },
-            { time: 144.0, text: "Извини..." },
+            // Бридж
+            { time: 95.0, text: "И я нормальным быть пытался, но я зае*ался" },
+            { time: 99.5, text: "Я рожден уе*ком не достойным любви" },
+            { time: 104.0, text: "Извини..." },
             
-            // Финальный припев
-            { time: 146.2, text: "Последняя любовь, пепел на простынях" },
-            { time: 150.2, text: "Бери все мои вещи, выкидывай из окна" },
-            { time: 154.5, text: "Последняя любовь, плачешь, а мне плевать" },
-            { time: 158.5, text: "Ты больше не поверишь никому и никогда" },
+            // Припев 2 (1:46 = 106 сек)
+            { time: 106.0, text: "Последняя любовь, пепел на простынях" },
+            { time: 110.0, text: "Бери все мои вещи, выкидывай из окна" },
+            { time: 114.5, text: "Последняя любовь, плачешь, а мне плевать" },
+            { time: 118.5, text: "Ты больше не поверишь никому и никогда" },
             
-            { time: 162.5, text: "Последняя любовь..." },
-            { time: 170.0, text: "" }
+            { time: 122.5, text: "Последняя любовь..." },
+            { time: 130.0, text: "" }
         ];
 
         let lastIndex = -1;
@@ -193,7 +194,6 @@
             const currentTime = audio.currentTime;
             let currentIndex = -1;
 
-            // Находим индекс текущей строки
             for (let i = 0; i < events.length; i++) {
                 if (currentTime >= events[i].time) {
                     currentIndex = i;
@@ -210,17 +210,14 @@
         });
 
         function updateLyrics(text) {
-            // 1. Записываем новый текст в скрытый элемент
             nextElement.innerText = text;
             
-            // 2. Меняем классы для анимации
             activeElement.classList.remove('active');
-            activeElement.classList.add('exit'); // Старый текст улетает вверх
+            activeElement.classList.add('exit');
             
             nextElement.classList.remove('exit');
-            nextElement.classList.add('active'); // Новый текст появляется снизу
+            nextElement.classList.add('active');
 
-            // 3. Меняем местами ссылки на элементы
             const temp = activeElement;
             activeElement = nextElement;
             nextElement = temp;
